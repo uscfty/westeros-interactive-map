@@ -1,3 +1,6 @@
+// 部署在 GitHub Pages 的子路径下，public 目录里的图片路径需要拼上这个前缀才能正确加载
+const BASE = import.meta.env.BASE_URL;
+
 /** 弹窗正文的一个内容块：段落 / 二三级标题 / 列表（列表项可选带加粗标签） */
 export type DescriptionBlock =
   | { kind: "paragraph"; text: string }
@@ -30,8 +33,8 @@ export const cities: City[] = [
     x: 31.5,
     y: 88.6,
     side: "left",
-    sigil: "/sigils/hightower.png",
-    image: "/cities/oldtown.jpg",
+    sigil: `${BASE}sigils/hightower.png`,
+    image: `${BASE}cities/oldtown.jpg`,
     description: [
       {
         kind: "paragraph",
@@ -97,8 +100,8 @@ export const cities: City[] = [
     x: 39.4,
     y: 82.0,
     side: "left",
-    sigil: "/sigils/tyrell.png", // TODO: 把家徽图放到 public/sigils/tyrell.png
-    image: "/cities/highgarden.jpg", // TODO: 把街景图放到 public/cities/highgarden.jpg
+    sigil: `${BASE}sigils/tyrell.png`, // TODO: 把家徽图放到 public/sigils/tyrell.png
+    image: `${BASE}cities/highgarden.jpg`, // TODO: 把街景图放到 public/cities/highgarden.jpg
     description: [
       {
         kind: "paragraph",
@@ -183,8 +186,8 @@ export const cities: City[] = [
     x: 49.5,
     y: 33.7,
     side: "left",
-    sigil: "/sigils/stark.png", // TODO: 把家徽图放到 public/sigils/stark.png
-    image: "/cities/winterfell.jpg", // TODO: 把街景图放到 public/cities/winterfell.jpg
+    sigil: `${BASE}sigils/stark.png`, // TODO: 把家徽图放到 public/sigils/stark.png
+    image: `${BASE}cities/winterfell.jpg`, // TODO: 把街景图放到 public/cities/winterfell.jpg
     description: [
       {
         kind: "paragraph",
@@ -275,8 +278,8 @@ export const cities: City[] = [
     x: 58.9,
     y: 21.1,
     side: "right",
-    sigil: "/sigils/nightswatch.png",
-    image: "/cities/castle-black.jpg",
+    sigil: `${BASE}sigils/nightswatch.png`,
+    image: `${BASE}cities/castle-black.jpg`,
     description: [
       {
         kind: "paragraph",
@@ -390,8 +393,8 @@ export const cities: City[] = [
     x: 32.1,
     y: 69.0,
     side: "left",
-    sigil: "/sigils/lannister.png",
-    image: "/cities/casterly-rock.jpg",
+    sigil: `${BASE}sigils/lannister.png`,
+    image: `${BASE}cities/casterly-rock.jpg`,
     description: [
       {
         kind: "paragraph",
@@ -479,6 +482,101 @@ export const cities: City[] = [
       {
         kind: "paragraph",
         text: "据说兰恩的鬼魂仍在凯岩城中徘徊，但凯岩城从未陷落。城内还有关押狮子的笼子、地牢和密牢，以及当海潮到来时地底传来的雷霆。",
+      },
+    ],
+  },
+  {
+    id: "kings-landing",
+    name: "君临 King's Landing",
+    ruler: "坦格利安家族 House Targaryen",
+    x: 59.9,
+    y: 71.3,
+    side: "right",
+    sigil: `${BASE}sigils/kings-landing.png`,
+    image: `${BASE}cities/kings-landing.jpg`,
+    description: [
+      {
+        kind: "paragraph",
+        text: "君临是七大王国的都城，坐落于黑水湾北岸、维斯特洛大陆东南海岸，由“征服者”伊耿一世在征服战争之初选定登陆之地而建立，因其舰队最先在此靠岸得名。城市依伊耿高地、维桑尼亚丘、雷妮丝丘等数座山丘而建，红堡雄踞伊耿高地之巅、俯瞰全城，铁王座便安坐于城内，三百年来始终是维斯特洛无可争议的权力中心。",
+      },
+      { kind: "heading", level: 2, text: "红堡与铁王座" },
+      {
+        kind: "paragraph",
+        text: "红堡由“残酷的”梅葛国王监造，因通体以淡红色岩石砌成而得名，城堡拥有七座巨大的鼓形塔楼，垛口森然，城墙下方是错综复杂的密道与地牢，据说连历代国王都未必尽知其详情。",
+      },
+      {
+        kind: "list",
+        items: [
+          {
+            label: "铁王座",
+            text: "由“征服者”伊耿一世下令，用他所征服的一千柄敌人佩剑经龙焰熔铸而成，安放在觐见大厅尽头的高台之上，王座周身遍布断刃残锋，相传从无一位君主能在其上真正安坐无忧。",
+          },
+          {
+            label: "龙穴",
+            text: "曾矗立于伊耿高地之巅的巨大圆顶建筑，用以圈养坦格利安家族的飞龙，如今仅剩断壁残垣，熏黑的石壁仍隐约可见当年龙焰灼烧的痕迹。",
+          },
+          {
+            label: "白书塔",
+            text: "御林铁卫的驻地与议事之所，历代白袍骑士的功过都记录在《御林铁卫白皮书》中，是效忠王座的最高荣誉象征。",
+          },
+          {
+            label: "密道与地牢",
+            text: "红堡之下开凿着幽深曲折的秘密通道，相传由梅葛国王亲自下令修建并处死了所有知情的工匠，如今仍是宫廷阴谋与逃亡故事中反复出现的舞台。",
+          },
+        ],
+      },
+      { kind: "heading", level: 2, text: "贝勒大圣堂" },
+      {
+        kind: "paragraph",
+        text: "坐落于维桑尼亚丘之上，由“虔诚王”贝勒下令建造，历时数十年方才落成，是全境信奉七神者心目中的至高圣地，取代旧镇星辰圣堂成为七大圣堂之首。圣堂以七座巨大的水晶穹顶著称，每一座分别供奉一位神祇，晴日里七彩天光洒满殿堂，庄严辉煌，无与伦比。",
+      },
+      { kind: "heading", level: 2, text: "城中风貌" },
+      {
+        kind: "paragraph",
+        text: "作为七大王国最繁华也最拥挤的都城，君临的富丽与市井的喧嚣杂陈并存：高地上宫殿林立、旗幡招展，山脚下窄巷纵横、鱼龙混杂，两者仅一墙之隔，构成了这座都城最真实的写照。",
+      },
+      {
+        kind: "list",
+        items: [
+          {
+            label: "河间集市",
+            text: "君临最大的市场，来自七大王国各地乃至狭海对岸的商贾云集于此，货物琳琅满目，终日人声鼎沸。",
+          },
+          {
+            label: "跳蚤窝",
+            text: "城中最贫困杂乱的街区，窄巷曲折、屋舍简陋，因终年弥漫的杂烩气味而得名，是全城治安最混乱的角落之一。",
+          },
+          {
+            label: "丝绸街",
+            text: "以声色场所与异域商铺闻名的街区，夜晚灯火不熄，是君临另一副截然不同的面孔。",
+          },
+          {
+            label: "城墙与七座城门",
+            text: "君临外围环绕着高大的城墙，设有龙门、旧门、狮门、泥门、王门、神门、河门七座城门，扼守着都城的门户。",
+          },
+        ],
+      },
+      { kind: "heading", level: 2, text: "历史" },
+      {
+        kind: "list",
+        items: [
+          {
+            label: "伊耿登陆与建都",
+            text: "征服战争之初，“征服者”伊耿一世率领舰队于黑水河口登陆，选定此地立营扎寨，随着征服战争的胜利，这座临时营地逐渐扩建为七大王国的都城，史称“君临”。",
+          },
+          {
+            label: "铁王座的锻造",
+            text: "“征服者”伊耿一世下令收集所有被征服敌人的佩剑，以巨龙“黑死神”巴勒里恩的龙焰将其熔铸弯折，铸就了象征七国一统的铁王座，自此历代国王皆以此为正统之证。",
+          },
+          {
+            label: "红堡的营建",
+            text: "“残酷的”梅葛国王在位期间下令建造红堡，以取代原先简陋的木制王城，奠定了此后数百年君临宫廷的核心格局。",
+          },
+          {
+            label: "贝勒大圣堂落成",
+            text: "“虔诚王”贝勒治下，贝勒大圣堂历经多年建成，君临就此取代旧镇成为七神信仰的中心，都城的宗教地位也随之达到顶峰。",
+          },
+        ],
       },
     ],
   },
