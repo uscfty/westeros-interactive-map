@@ -22,6 +22,7 @@ npm run preview    # 预览构建产物
 
 ```
 westeros-interactive-map/
+├── .github/workflows/deploy.yml  # push 到 main 后自动 build 并部署到 GitHub Pages
 ├── index.html              # 引入 Google Fonts（UnifrakturMaguntia 花体标题字）
 ├── src/
 │   ├── main.ts              # Vue 应用入口

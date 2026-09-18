@@ -2,26 +2,42 @@
 
 **项目**：维斯特洛互动地图（westeros-interactive-map）
 **技术栈**：Vite + Vue 3（`<script setup>` + TypeScript）
-**日期**：2026-08-12（延续自上一份 HANDOFF；今天新增君临城，并围绕它的专属弹窗主题做了好几轮样式排查与重构）
+**日期**：2026-09-18（延续自上一份 HANDOFF——2026-08-12 那份君临城的记录；今天没有再录入新城市，主要是把部署这块彻底修好，再补了移动端适配）
 
 ---
 
 ## 一、今天完成的功能
 
-### 1. 新增城市：君临 King's Landing（坦格利安家族）—— 完整录入
-- **坐标**：`x: 59.9, y: 71.3`，`side: "right"`。
-- **正文**：参照已有城市的写法，涵盖红堡与铁王座、龙窝、白书塔、密道与地牢、贝勒大圣堂、城中风貌（河间集市/跳蚤窝/丝绸街/七座城门）、历史四条（伊耿登陆、铁王座锻造、红堡营建、贝勒大圣堂落成）。
-- **素材**：家徽图 `public/sigils/kings-landing.png`、街景图 `public/cities/kings-landing.jpg` 已就位（这两个文件目前还是 git 未跟踪状态，记得下次提交时 `git add`）。
+### 1. 修好了线上网站——它其实从来没有真正 build 过
+上线地址 https://uscfty.github.io/westeros-interactive-map/ 之前一直是 Pages 的 legacy 模式，直接拿 `main` 分支根目录当静态站点源，而根目录的 `index.html` 是**没编译过的源文件**（`<script type="module" src="/src/main.ts">`，直接引用 `.vue`/`.ts`），浏览器根本没法执行——线上页面此前是打不开的，仓库里也从来没有提交过任何构建产物。
 
-### 2. 新增 `"royal"` 弹窗主题——君临专属的羊皮纸 + 胡桃木风格
-`City` 接口新增了一个可选字段 `theme?: "royal"`，君临是目前唯一用到它的城市。视觉上和其余城市的深色羊皮纸面板区分开：
-- 米黄色羊皮纸底色 + 四角渍染渐变 + 极淡的噪点纹理（`data:image/svg+xml` 内联生成，不是外部图片，符合"暂时不加图片纹理"的要求）。
-- 首段落做首字下沉（Drop Cap），标题两侧缀 ⚜ 花纹。
-- 面板最外沿有一圈**双线胡桃木画框**（`::before` 伪元素，`inset: 10px`，颜色 `#3b2219`）。
-- 顶部城市插图带细描边 + 内阴影，做出"镶在羊皮纸卡槽里"的凹陷质感，而不是图片剪影/照片纹理。
+修复分两部分：
+- **接入 GitHub Actions 自动构建部署**：新增 `.github/workflows/deploy.yml`，push 到 `main` 时用 `vue-tsc -b && vite build` 构建，再用官方 `actions/deploy-pages` 发布；同时把仓库 Pages 设置的 build source 从 "branch: main / legacy" 切到 "workflow" 模式（通过 `gh api -X PUT repos/.../pages -f build_type=workflow`）。
+- **修掉子路径部署下的资源 404**：项目页面部署在 `uscfty.github.io/westeros-interactive-map/` 这个子路径下，但 `App.vue`/`cities.ts`/`index.html` 里所有静态资源路径都是硬编码的**域名根路径**（`/sigils/xxx.png`、`/westeros.jpg`、`/background.jpg`、`/favicon.png` 等）。这类写死的 public 目录绝对路径 Vite 不会自动帮你加 base 前缀（这是 Vite 的既定行为，不是 bug）。改法：
+  - `vite.config.ts` 设置 `base: '/westeros-interactive-map/'`
+  - `index.html` 里的 favicon 改用 Vite 支持的 `%BASE_URL%` 占位符
+  - `App.vue`、`cities.ts` 里新增 `const base = import.meta.env.BASE_URL`（或 `BASE`），所有资源路径改成模板字符串拼接，例如 `` `${base}westeros.jpg` ``
+  - `.map-container` 原来在 CSS `<style>` 里用 `background-image: url("background.jpg")`（相对路径，且没有 `/` 前缀，Vite 会把它当模块导入去解析，根本解析不到 `public/` 下的文件）——这个此前也是坏的。改成不在 CSS 里写死，通过 `:style` 内联绑定 `` url(${base}background.jpg) ``，CSS 规则里只保留 `background-size`/`position`/`repeat`。
+  - 本地用 `vite build` + `vite preview` 实测了一遍，`curl` 检查了所有资源路径（favicon/地图图/背景图/音乐/家徽/街景图）在子路径下全部返回 200，确认没漏。
 
-### 3. 清理了一处过期注释
-`cities.ts` 里君临条目的 `sigil`/`image` 字段原本各带一条 `// TODO: 把图放进去` 的注释，图片其实已经放进 `public/` 了，注释已经顺手删掉（这是延续上一份 HANDOFF 里提到的"老问题"，之前临冬城/凯岩城已经清过一次，君临新增时又带出来了同样的模式）。
+### 2. 把上次遗留的未提交文件一起提交了
+上一份 HANDOFF 里提到的 `public/cities/kings-landing.jpg`、`public/sigils/kings-landing.png`（当时是 `??` 未跟踪状态）这次一起 `git add` 提交了，连同 `favicon.png`（新的）替换掉了旧的 `favicon.svg`。
+
+**`public/aged_parchment_scroll.png`（10.8MB）目前依然是未跟踪状态，故意没提交**——全仓库搜索了一遍，代码里没有任何地方引用它，不确定是不是当时做 royal 主题时试验性下载但没用上的素材。**下次开工第一步建议先问一下这文件到底要不要用**，要用就接进代码，不用就直接删掉，别让它继续留着占用未跟踪状态。
+
+### 3. 移动端 / iPhone 竖屏适配
+用户反馈说要在 iPhone 上也能正常看，测下来主要是两个硬伤：
+
+- **整个页面被强制锁成桌面横屏的 16:9 "信封盒子"**（`.map-container` 用 `width: min(100vw, 177.7778vh); height: min(100vh, 56.25vw)`）。这套公式在竖屏手机上会把可用高度压缩到很离谱的程度（算了一下 iPhone SE 375×667 的视口，算出来容器只有 375×211，地图被挤成屏幕正中间一条很窄的横条，上下一大片全是留黑）。这层信封盒子本来是为了让容器比例始终匹配 16:9 的 `background.jpg` 桌面壁纸，横屏桌面端没问题，但完全不适合竖屏手机。
+  **修法**：加了 `@media (max-aspect-ratio: 1/1)`（视口宽 ≤ 高，覆盖绝大多数竖屏场景，不是拍脑袋定一个手机宽度断点），命中时 `.map-container` 改成直接撑满视口。之所以选用宽高比而不是固定像素宽度做断点，是因为问题根源就是"容器比例和视口比例不匹配"，用 aspect-ratio 判断更贴合本质，顺带能覆盖竖屏平板这类没有专门测过但同理会中招的场景。改完之后地图本身是竖版比例（`aspect-ratio: 1920/2716`，图源本来就是竖的），天然适合竖屏，不需要再靠信封盒子对齐背景图。
+- **城市标记的名字标签只在 `:hover` 时显示，触屏设备没有 hover 状态，永远看不到城市名，只能瞎点。**14px 的圆点热区也偏小（Apple HIG 建议最小触控尺寸 44px）。
+  **修法**：加了 `@media (hover: none)`，命中时标签默认常显、圆点放大到 16px、外层 padding 加到 14px（视觉热区接近 44px）；另外给 `:active` 也加上了原来只有 hover/focus-visible 才有的放大反馈，弥补触屏点击时没有视觉确认的问题。
+
+其余顺手改的：
+- `main` 高度加一层 `height: 100dvh`（写在 `height: 100vh` 后面做渐进增强，不支持的浏览器自动忽略回退到 vh），避免 iOS Safari 地址栏收起/展开导致 `100vh` 跳动。
+- `.city-marker`、`.bgm-toggle`、`.city-panel-close` 加 `-webkit-tap-highlight-color: transparent`，去掉 iOS Safari 点击时那个丑的蓝色高亮闪烁。
+- `.city-panel-scroll` 加 `-webkit-overflow-scrolling: touch`，iOS 惯性滚动。
+- `.city-panel` 宽度 `min(420px, 88vw)` → `min(420px, 92vw)`，窄屏下多一点可用宽度。
 
 ---
 
@@ -29,91 +45,54 @@
 
 ```
 westeros-interactive-map/
-├── index.html              # 引入 Google Fonts（UnifrakturMaguntia）
+├── .github/workflows/deploy.yml  # push main 后自动 vite build + 部署到 GitHub Pages
+├── vite.config.ts           # base: '/westeros-interactive-map/'（项目页面部署在子路径下，必须设）
+├── index.html                # 引入 Google Fonts；favicon 用 %BASE_URL% 占位符
 ├── src/
-│   ├── main.ts              # Vue 应用入口，未改动
-│   ├── style.css             # 全局样式（Vite 默认模板残留，和地图页基本无关，见"遗留问题"）
-│   ├── App.vue               # 唯一的组件，页面全部逻辑和样式都在这里（现在约 500 行）
+│   ├── main.ts               # Vue 应用入口，未改动
+│   ├── style.css              # 全局样式（上一轮已经清理掉 Vite 默认模板残留）
+│   ├── App.vue                # 唯一的组件，页面全部逻辑和样式都在这里（现在约 520 行）
 │   └── data/
-│       └── cities.ts        # 城市数据表（唯一的数据源，现已收录 6 座城市）
+│       └── cities.ts         # 城市数据表（唯一的数据源，现收录 6 座城市）
 └── public/
-    ├── westeros.jpg / background.jpg / background_bgm.mp3
-    ├── sigils/   # hightower / tyrell / stark / lannister / nightswatch / kings-landing.png
-    └── cities/   # oldtown / highgarden / winterfell / castle-black / casterly-rock / kings-landing.jpg
+    ├── westeros.jpg / background.jpg / background_bgm.mp3 / favicon.png
+    ├── sigils/   # hightower / tyrell / stark / lannister / nightswatch / kings-landing
+    ├── cities/   # oldtown / highgarden / winterfell / castle-black / casterly-rock / kings-landing
+    └── aged_parchment_scroll.png  # 未跟踪、代码里没引用，见上面"遗留问题"
 ```
 
-### 核心数据结构（`src/data/cities.ts`）
-```ts
-type DescriptionBlock =
-  | { kind: "paragraph"; text: string }
-  | { kind: "heading"; level: 2 | 3; text: string }
-  | { kind: "list"; items: { label?: string; text: string }[] };
+### 静态资源路径的新约定（这次改动引入，以后加资源要照着写）
+项目部署在 GitHub Pages 的子路径下，`public/` 目录里的文件**不能再写死域名根路径**（`/xxx.png` 这种），必须拼上 `import.meta.env.BASE_URL`：
+- `.vue`/`.ts` 里：文件顶部/`<script setup>` 里定义 `const base = import.meta.env.BASE_URL`（`cities.ts` 里叫 `BASE`），资源路径写成 `` `${base}sigils/xxx.png` ``
+- `index.html` 里：用 Vite 内置的 `%BASE_URL%` 占位符，例如 `href="%BASE_URL%favicon.png"`
+- CSS `<style>` 块里**不要**直接写 `url("xxx.jpg")` 引用 `public/` 下的图（Vite 会当模块导入去解析，大概率找不到文件）——需要用到背景图的话通过 `:style` 内联绑定，把拼好 base 前缀的 URL 传进去（参考 `.map-container` 的 `background-image` 做法）。
 
-interface City {
-  id: string;
-  name: string;
-  ruler: string;
-  x: number;              // 地图图片上的横向百分比坐标
-  y: number;              // 地图图片上的纵向百分比坐标
-  side: "left" | "right"; // 弹窗从哪一侧滑出
-  sigil: string;
-  image: string;
-  theme?: "royal";         // 新增字段：君临用，不填则用默认深色羊皮纸风格
-  description: DescriptionBlock[];
-}
-```
-加新城市依旧只需要往 `cities` 数组追加一条数据，`App.vue` 的渲染逻辑是完全数据驱动的，不用改。想让新城市也用 royal 风格，加一行 `theme: "royal"` 就行——但注意 royal 主题目前只有君临一个样本，配色/间距是照着君临的图片尺寸（1920×1080 街景图）调出来的，换一个长宽比差异很大的图可能需要重新看一眼效果。
-
-### 弹窗结构与滚动机关（`App.vue`）
-- `.city-panel` 是 `position: fixed` 的整个弹窗容器，`.city-panel-scroll` 是它内部**唯一真正滚动**的内容层（`overflow-y: auto`）。这样设计是为了让金框（royal 主题的 `::before`）和关闭按钮**不随内容滚动**，永远贴在面板可视边缘。
-- `selectedCity` 和 `panelOpen` 两个变量配合，保证关闭动画播完之前面板内容不会跳变（`@after-leave` 才清空 `selectedCity`）。
-- `<Transition>` 的 `slide-left` / `slide-right` 由 `selectedCity.side` 动态决定。
-
-### royal 主题的最终实现方案（重要，下面这节详细写了为什么是这样）
-`.city-panel.royal .city-panel-image` **不再做"通栏出血 + 负 margin 精确对齐画框"**这种需要手算像素的写法，而是老老实实做一个 `.city-panel-scroll` 内边距（32px/24px）里的普通区块（`width: 100%; margin: 0 0 24px; box-sizing: border-box; overflow: hidden;`），天然和 10px 内缘的金框画框之间留了 22px/14px 安全距离，物理上不可能再压住边框。双线画框 `.city-panel.royal::before` 的两条线颜色统一为 `#3b2219`，中间的缝是纯 `transparent`（透出面板自己的羊皮纸底色），不再额外引入第三种颜色。
+其余核心数据结构（`City` 接口、`royal` 主题、弹窗滚动机关等）跟上一份 HANDOFF 描述的一致，这次没有改动，不再重复贴。
 
 ---
 
-## 三、今天踩的坑（对以后改这块 CSS 有参考价值，建议别删）
+## 三、今天踩的坑
 
-这部分是今天来回调试最费时间的地方，记下来避免以后重复踩：
+1. **线上从来没真正部署成功过，但排查前完全看不出来**——`gh api repos/.../pages` 一查 `status: "built"`，Pages 自己认为部署是成功的（因为它确实原样把 `index.html` 发布出去了，只是发布的是源文件不是构建产物）。**教训**：光看 Pages API 返回的 build 状态不能说明网站真的能跑，得实际 `curl` 页面内容看它引用的是 `/src/main.ts` 还是 `/assets/xxx-hash.js` 才能判断有没有走过构建。
 
-1. **`:first-of-type` 选错了元素，导致首字下沉一直没生效。**
-   `.city-panel.royal .city-panel-desc:first-of-type::first-letter` 里 `:first-of-type` 是"同标签同级中的第一个"，不看 class。而 `.city-panel-house`（"统治：xxx"那一行）本身也是个 `<p>`，且排在所有 `.city-panel-desc` 之前，所以真正的 `p:first-of-type` 是它，不是任何一条正文段落——这条规则永远匹配不到东西。**修法**：改用相邻兄弟选择器 `.city-panel.royal .city-panel-house + .city-panel-desc::first-letter`，精确锁定"统治："后面紧跟着的第一段正文，不受列表/标题顺序影响。
-
-2. **四角"铆钉"圆点定位错乱，压在正文文字上。**
-   原来用 4 个 `radial-gradient(circle, ...)` 当 `background-image` 做四角小圆点装饰，但没写 `background-size`。渐变默认按整个 `::before` 盒子（几乎是面板全高）铺开，`background-position` 的 `-4px` 偏移量只是把这个巨大渐变层挪了几像素，圆点实际停在框体纵向中部附近——面板一旦内容变长，圆点就会压在正文中间的文字上（用户反馈是压住了"城"字）。这不是简单的坐标错位，是这个写法本身没法做出贴角的效果，所以**直接删掉了，没有重做**。
-
-3. **图片穿透边框，反复出现了好几次，最后才找到根本解法。**
-   最早的写法是图片通栏铺满到面板真正的边缘（`margin: -32px -24px`），而金框在 `inset: 10px` 处，两者之间那 10px 的"卡纸"区域被图片盖住，边框看起来在图片处断开。中途试过"精确计算负 margin 让图片刚好收在金框内缘"（`margin: -22px -14px`），理论上没问题，但只要有一点像素误差就会重新出问题，反复出现"顶部图片和边框交界处不齐"的反馈。**最终解法**：图片完全不做出血，就是内边距里的一个普通区块，天然留出安全距离，不需要精算像素（见上面"核心架构"一节）。
-
-4. **调试红色背景没有显现，一度被误判为"浏览器没读到新 CSS"（缓存问题），其实是我的测试方法选错了属性。**
-   `.city-panel.royal` 同时设置了 `background-color` 和 `background-image`（羊皮纸渐变+噪点纹理）。CSS 里 `background-image` 图层天生盖在 `background-color` 之上，且那层渐变不透明，所以 `background-color: red !important` 就算生效了，也会被同一元素自己的 `background-image` 完全盖住，跟浏览器有没有读到新 CSS 毫无关系。后来改用 `outline`（画在盒子外面，不会被任何 background 属性挡住）才验证成功。**教训**：以后要验证"这条 CSS 规则有没有生效"，优先用 `outline` 而不是 `background-color`，尤其是当元素本身还设了 `background-image` 的时候。
-
-5. **颜色改了几轮用户还是觉得"边框是金色"，后来发现是漏改了双线中间那道浅色隔线。**
-   画框的双线结构其实是"深色线 + 中间一道浅色隔线 + 深色线"，前几轮只改了两条深色线（`#9c7523 → #5d4037 → #3b2219`），中间那道 `rgba(232, 219, 184, 0.9)`（暖米黄色）一直没动过。夹在两条深色线中间的这道浅色线，在缩小的截图里非常容易被看成"金线"。最终把它也统一处理了（现在中间是纯 `transparent`，不再是一个独立的颜色）。
-
-6. **一度加了 `!important` 和 `.city-panel.royal *` 暴力通配符做诊断，事后全部清理掉了。**
-   这是为了排除"CSS 权重被覆盖"的可能性加的诊断代码，排查完确认了从始至终都不存在权重冲突（问题 3、4、5 才是真正原因），所以这些 `!important` 和暴力覆盖规则都是没有必要的技术债，已经全部删除，现在整个 royal 主题的 CSS 没有一处用 `!important`。
+2. **想用本地 headless Chrome 截图验证移动端 CSS，结果这台机器上 Chrome 153 的 `--window-size` 完全不生效**——无论传 `390,844` 还是 `390x844`，实际布局视口跟请求的尺寸对不上（用一个只打印 `window.innerWidth` 的极简测试页反复验证过，同一个 flag 组合每次给出的实际视口都不一样、且和请求值对不上，`--screenshot` 输出的 PNG 像素尺寸虽然符合请求，但那只是导出时被缩放/裁剪过，不代表真实布局视口）。折腾了挺久最后放弃了这条验证路径，改成直接读编译后的 CSS 文本确认 `@media` 规则本身正确（`max-aspect-ratio`/`max-width`/`hover:none` 这些都是很成熟的标准特性，理论上没有兼容性问题），线上效果最终还是需要在真机 Safari 上肉眼确认。**教训**：这个环境里不要再指望 `chrome --headless --window-size=... --screenshot` 这条路径来做视口相关的验证，不可靠；真要截图验证移动布局，得用支持真正设备模拟的工具（比如 Playwright/Puppeteer 的 `page.setViewport`），而不是裸 CLI flag。
 
 ---
 
-## 四、遗留问题 / 明天第一步建议
+## 四、遗留问题 / 下次第一步建议
 
 ### 还没做，下次可以顺手看看
-1. **滚动条没有做旧适配**：`.city-panel-scroll` 目前用的是浏览器默认滚动条，在羊皮纸/深色底色的面板里比较跳，可以加一段 `::-webkit-scrollbar` 自定义样式（细窄的胡桃木色滑块）。
-2. **颜色目前是硬编码，没有抽成 CSS 变量**：现在有"默认深色羊皮纸"和"royal 胡桃木"两套配色并存，`App.vue` 里散落着大量十六进制色值，以后如果要统一调色或者再加第三套主题，改起来会比较痛苦，建议抽成 CSS 自定义属性（`:root` 或者按主题分组的变量）。
-3. **`.map-container` 里有一行注释和代码对不上**（`App.vue` 155 行左右）：注释写的是"把 /background_bgm.mp3 换成……"，但这段代码实际是背景图片 `background-image` 的设置。这是好几份 HANDOFF 之前就记录的老问题，一直没顺手修，这次也还是没碰。
-4. **`src/style.css`** 里还残留 Vite 默认模板的样式（`.hero`、`#next-steps` 等），页面用不上，可以清理掉。
-5. **移动端/触屏体验未验证**：标记点靠 `hover` 显示城市名，触屏没有 hover 状态；14px 的圆点在触屏上命中率可能偏低。
+1. **`public/aged_parchment_scroll.png`（10.8MB）到底要不要用**：目前未跟踪、代码零引用。先问清楚用途，用就接进去，不用就删掉。
+2. **移动端适配还没在真机上肉眼确认过**：这次的 CSS 改动是照着标准 media query 语义写的，本地 headless 截图验证工具链失效（见上面"踩的坑"），建议下次开工第一件事是找台 iPhone 或用真正支持视口模拟的工具（Chrome DevTools 手动打开、或 Playwright）看一眼实际效果，尤其确认：竖屏地图有没有被压扁、城市名标签会不会太挤/重叠（6 个城市名同时常显，如果以后新增更多城市可能需要考虑做成分级显示而不是全部常驻）。
+3. **滚动条没有做旧适配**：`.city-panel-scroll` 还是浏览器默认滚动条，可以加 `::-webkit-scrollbar` 自定义（细窄胡桃木色滑块）——这条从上一份 HANDOFF 就有，一直没顺手做。
+4. **颜色硬编码，没抽成 CSS 变量**——同上，遗留老问题。
+5. **`src/style.css`** 上一轮已经清理过 Vite 默认模板残留，这条可以从遗留列表里划掉了。
 
 ### 功能待办
-1. **还差至少 1 座大家族城市没录入**：鹰巢城 Eyrie（艾林家族）目前还没有标记点和数据，其余像多恩/太阳矛、铁群岛/派克城看情况是否需要覆盖。
-2. **君临的家徽/街景图片文件还没提交到 git**：`public/cities/kings-landing.jpg`、`public/sigils/kings-landing.png` 目前是 untracked 状态（`git status` 里显示 `??`），下次记得连同 `App.vue`、`cities.ts` 的改动一起提交。
+1. **还差至少 1 座大家族城市没录入**：鹰巢城 Eyrie（艾林家族）。
+2. GitHub Actions workflow 里 Node 版本已经从 20 升到 22（消掉了一次 deprecation 警告），后续 Node 22 也快要到 deprecation 周期时记得再升一次。
 
-### 顺手提一句：今天调试过程中电脑上一度并存 3 个 vite dev server 进程（5173/5174/5199，都指向同一份代码），当时已经全部 kill 掉、清了 `node_modules/.vite` 缓存、重新单独起了一个干净的 5173。如果下次发现浏览器强刷也不生效，先 `lsof -iTCP -sTCP:LISTEN | grep node` 看看是不是又开了好几个端口，不一定是缓存问题。
-
-### 明天建议的顺序
-1. 先把君临的两个图片文件 `git add` 提交掉，避免继续放在未跟踪状态。
-2. 有余力的话，开始鹰巢城的坐标定位和正文录入。
-3. 如果还有时间，顺手把滚动条做旧样式和颜色变量抽取这两项做掉——都是低风险、纯视觉/工程质量的小改动。
+### 下次建议的顺序
+1. 先确认 `aged_parchment_scroll.png` 的去留。
+2. 找机会在真机 iPhone 上过一遍移动端效果，看看竖屏地图、城市标签常显是否符合预期。
+3. 有余力的话开始鹰巢城的坐标定位和正文录入；再顺手把滚动条做旧样式和颜色变量抽取这两项低风险小改动做掉。
