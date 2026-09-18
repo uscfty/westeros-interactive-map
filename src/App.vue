@@ -161,6 +161,7 @@ main {
   justify-content: center;
   width: 100vw;
   height: 100vh;
+  height: 100dvh; /* iOS Safari 地址栏收起/展开时 100vh 会跳动，100dvh 跟手；不支持的浏览器回退到上一行的 100vh */
   overflow: hidden;
   font-family: system-ui, sans-serif;
   color: #e5e7eb;
@@ -227,6 +228,26 @@ main {
   border: 2px solid #333;
 }
 
+/* 竖屏（绝大多数手机竖持的场景）：.map-container 的 16:9 信封盒子是为桌面端
+   横向宽屏配合 background.jpg 设计的，搬到竖屏手机上会把地图压成屏幕中间一条
+   很窄的横条、上下大片留黑。竖屏下改成让容器撑满整个视口——地图图片本身
+   1920:2716 就是竖版比例，天然更适合竖屏，不需要再靠信封盒子对齐背景图。 */
+@media (max-aspect-ratio: 1/1) {
+  .map-container {
+    width: 100%;
+    height: 100%;
+  }
+  .map-frame {
+    max-height: calc(100% - 60px);
+  }
+}
+@media (max-width: 480px) {
+  .map-title {
+    font-size: 1.9rem;
+    letter-spacing: 2px;
+  }
+}
+
 .city-marker {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -238,6 +259,7 @@ main {
   border: none;
   padding: 6px;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .city-marker-dot {
   width: 14px;
@@ -258,19 +280,34 @@ main {
   pointer-events: none;
 }
 .city-marker:hover .city-marker-dot,
-.city-marker:focus-visible .city-marker-dot {
+.city-marker:focus-visible .city-marker-dot,
+.city-marker:active .city-marker-dot {
   transform: scale(1.3);
 }
 .city-marker:hover .city-marker-label,
 .city-marker:focus-visible .city-marker-label {
   opacity: 1;
 }
+/* 触屏设备没有 hover 状态，城市名永远显示不出来，只能瞎点；
+   同时把可点击热区从视觉上的 14px 圆点放大到接近 44px，命中率更高 */
+@media (hover: none) {
+  .city-marker {
+    padding: 14px;
+  }
+  .city-marker-dot {
+    width: 16px;
+    height: 16px;
+  }
+  .city-marker-label {
+    opacity: 1;
+  }
+}
 
 .city-panel {
   position: fixed;
   top: 0;
   bottom: 0;
-  width: min(420px, 88vw);
+  width: min(420px, 92vw);
   background: rgba(15, 23, 42, 0.94);
   color: #f5f0e6;
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
@@ -283,6 +320,7 @@ main {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden; /* 保险：防止通栏图片的负 margin 计算稍有偏差时溢出面板、压住金框 */
+  -webkit-overflow-scrolling: touch; /* iOS Safari 惯性滚动 */
   box-sizing: border-box;
   padding: 32px 24px;
 }
@@ -310,6 +348,7 @@ main {
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   /* 提高到 10：确保始终悬浮在通栏图片之上，不会被压住 */
   z-index: 10;
 }
@@ -470,6 +509,7 @@ main {
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   backdrop-filter: blur(4px);
   transition:
     background 0.2s,
