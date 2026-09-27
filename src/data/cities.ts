@@ -34,7 +34,7 @@ export const cities: City[] = [
     y: 88.6,
     side: "left",
     sigil: `${BASE}sigils/hightower.png`,
-    image: `${BASE}cities/oldtown.jpg`,
+    image: `${BASE}cities/oldtown.webp`,
     description: [
       {
         kind: "paragraph",
@@ -101,7 +101,7 @@ export const cities: City[] = [
     y: 82.0,
     side: "left",
     sigil: `${BASE}sigils/tyrell.png`, // TODO: 把家徽图放到 public/sigils/tyrell.png
-    image: `${BASE}cities/highgarden.jpg`, // TODO: 把街景图放到 public/cities/highgarden.jpg
+    image: `${BASE}cities/highgarden.webp`, // TODO: 把街景图放到 public/cities/highgarden.jpg
     description: [
       {
         kind: "paragraph",
@@ -187,7 +187,7 @@ export const cities: City[] = [
     y: 33.7,
     side: "left",
     sigil: `${BASE}sigils/stark.png`, // TODO: 把家徽图放到 public/sigils/stark.png
-    image: `${BASE}cities/winterfell.jpg`, // TODO: 把街景图放到 public/cities/winterfell.jpg
+    image: `${BASE}cities/winterfell.webp`, // TODO: 把街景图放到 public/cities/winterfell.jpg
     description: [
       {
         kind: "paragraph",
@@ -279,7 +279,7 @@ export const cities: City[] = [
     y: 21.1,
     side: "right",
     sigil: `${BASE}sigils/nightswatch.png`,
-    image: `${BASE}cities/castle-black.jpg`,
+    image: `${BASE}cities/castle-black.webp`,
     description: [
       {
         kind: "paragraph",
@@ -394,7 +394,7 @@ export const cities: City[] = [
     y: 69.0,
     side: "left",
     sigil: `${BASE}sigils/lannister.png`,
-    image: `${BASE}cities/casterly-rock.jpg`,
+    image: `${BASE}cities/casterly-rock.webp`,
     description: [
       {
         kind: "paragraph",
@@ -493,7 +493,7 @@ export const cities: City[] = [
     y: 71.3,
     side: "right",
     sigil: `${BASE}sigils/kings-landing.png`,
-    image: `${BASE}cities/kings-landing.jpg`,
+    image: `${BASE}cities/kings-landing.webp`,
     description: [
       {
         kind: "paragraph",

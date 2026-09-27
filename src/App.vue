@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { cities, type City } from "./data/cities";
 
 // 部署在 GitHub Pages 的子路径下，public 目录里的静态资源需要拼上这个前缀才能正确加载
@@ -8,29 +8,51 @@ const base = import.meta.env.BASE_URL;
 const audioRef = ref<HTMLAudioElement | null>(null);
 const isPlaying = ref(false);
 
-function toggleMusic() {
-  const audio = audioRef.value;
-  if (!audio) return;
+const audioSource = ref<string>();
+const musicLoading = ref(false);
+const musicError = ref("");
+const closeButton = ref<HTMLButtonElement | null>(null);
+let cityTrigger: HTMLElement | null = null;
 
-  if (audio.paused) {
-    audio.play();
-    isPlaying.value = true;
-  } else {
+async function toggleMusic() {
+  const audio = audioRef.value;
+  if (!audio || musicLoading.value) return;
+  musicError.value = "";
+  if (!audio.paused) {
     audio.pause();
-    isPlaying.value = false;
+    return;
+  }
+  musicLoading.value = true;
+  try {
+    if (!audioSource.value) {
+      audioSource.value = `${base}background_bgm.mp3`;
+      // Assign immediately to preserve the tap gesture required by iOS audio.
+      audio.src = audioSource.value;
+    }
+    await audio.play();
+  } catch {
+    musicError.value = "音乐暂时无法播放，请再试一次";
+  } finally {
+    musicLoading.value = false;
   }
 }
 
 // selectedCity 在弹窗关闭动画播完之前都保留数据，避免面板在滑出过程中内容跳变
 const selectedCity = ref<City | null>(null);
 const panelOpen = ref(false);
+const panelExpanded = ref(false);
 
-function selectCity(city: City) {
+async function selectCity(city: City, event: MouseEvent) {
+  cityTrigger = event.currentTarget as HTMLElement;
   selectedCity.value = city;
+  panelExpanded.value = false;
   panelOpen.value = true;
+  await nextTick();
+  closeButton.value?.focus({ preventScroll: true });
 }
 function closePanel() {
   panelOpen.value = false;
+  cityTrigger?.focus({ preventScroll: true });
 }
 function clearSelectedCity() {
   selectedCity.value = null;
@@ -51,14 +73,23 @@ const rulerEn = computed(() =>
   <main
     class="map-container"
     :style="{
-      backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.6)), url(${base}background.jpg)`,
+      backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.6)), url(${base}background.webp)`,
     }"
   >
     <h1 class="map-title">WESTEROS</h1>
 
     <!-- map-frame 的宽高比锁定为原图比例，这样城市坐标的百分比定位才能精确对齐图片像素 -->
     <div class="map-frame">
-      <img :src="`${base}westeros.jpg`" alt="维斯特洛地图" class="map-image" />
+      <picture>
+      <source media="(max-width: 950px)" :srcset="`${base}westeros-640.webp 640w, ${base}westeros-960.webp 960w`" sizes="calc(100vw - 24px)" />
+      <img
+        :src="`${base}westeros-960.webp`"
+        :srcset="`${base}westeros-640.webp 640w, ${base}westeros-960.webp 960w, ${base}westeros-1920.webp 1920w`"
+        sizes="(max-width: 600px) calc(100vw - 24px), 600px"
+        width="1920" height="2716" fetchpriority="high"
+        alt="维斯特洛地图" class="map-image"
+      />
+      </picture>
 
       <button
         v-for="city in cities"
@@ -67,23 +98,30 @@ const rulerEn = computed(() =>
         class="city-marker"
         :style="{ left: city.x + '%', top: city.y + '%' }"
         :aria-label="`查看${city.name}的介绍`"
-        @click="selectCity(city)"
+        @click="selectCity(city, $event)"
       >
         <span class="city-marker-dot"></span>
-        <span class="city-marker-label">{{ city.name }}</span>
+        <span class="city-marker-label">{{ city.name.split(" ")[0] }}</span>
       </button>
     </div>
 
-    <!-- 把 background_bgm.mp3 换成你放进 public 文件夹的音乐文件名 -->
-    <audio ref="audioRef" :src="`${base}background_bgm.mp3`" loop preload="auto"></audio>
+    <!-- 音乐仅在点击播放后设置 src，避免首屏下载。 -->
+    <audio ref="audioRef" :src="audioSource" loop preload="none"
+      @play="isPlaying = true" @pause="isPlaying = false" @error="isPlaying = false"
+    ></audio>
     <button
       class="bgm-toggle"
+      :disabled="musicLoading"
+      :aria-busy="musicLoading"
+      :aria-pressed="isPlaying"
       type="button"
       :aria-label="isPlaying ? '暂停背景音乐' : '播放背景音乐'"
       @click="toggleMusic"
     >
-      {{ isPlaying ? "🔊" : "🔈" }}
+      {{ musicLoading ? "…" : isPlaying ? "🔊" : "🔈" }}
     </button>
+
+    <p v-if="musicError" class="music-error" role="status">{{ musicError }}</p>
 
     <Transition
       :name="selectedCity?.side === 'right' ? 'slide-right' : 'slide-left'"
@@ -92,15 +130,21 @@ const rulerEn = computed(() =>
       <aside
         v-if="panelOpen && selectedCity"
         class="city-panel"
-        :class="selectedCity.side"
+        aria-labelledby="city-heading"
+        @keydown.esc="closePanel"
+        :class="[selectedCity.side, { 'city-panel--expanded': panelExpanded }]"
       >
         <button
+          ref="closeButton"
           class="city-panel-close"
           type="button"
           aria-label="关闭"
           @click="closePanel"
         >
           ×
+        </button>
+        <button class="city-panel-expand" type="button" :aria-expanded="panelExpanded" @click="panelExpanded = !panelExpanded">
+          {{ panelExpanded ? "收起" : "展开阅读" }}
         </button>
         <!-- 独立的可滚动内容层：金框（::before）和关闭按钮留在 city-panel 本身，
              不随内容滚动，避免长正文滚动时边框跟着挪位、露出面板外的问题 -->
@@ -109,9 +153,10 @@ const rulerEn = computed(() =>
             :src="selectedCity.image"
             :alt="`${selectedCity.name}街景`"
             class="city-panel-image"
+            decoding="async"
           />
           <div class="city-panel-body" :class="{ 'city-panel-body--royal': isRoyalCapital }">
-            <h2>{{ selectedCity.name }}</h2>
+            <h2 id="city-heading">{{ selectedCity.name }}</h2>
             <img
               :src="selectedCity.sigil"
               :alt="`${selectedCity.ruler}的纹章`"
@@ -165,35 +210,21 @@ main {
   overflow: hidden;
   font-family: system-ui, sans-serif;
   color: #e5e7eb;
-  /* 当窗口比例不是 16:9 时，.map-container 会小于整个视口，
-     多出来的部分露出这个深色背景，形成有意为之的“letterbox”边框，
-     而不是背景图被 cover 硬裁切变形 */
   background: #0f172a;
 }
 .map-container {
   text-align: center;
-  padding: 12px;
-  /* 用 min() 在宽、高两个方向分别求出不超出视口的极限值，
-     两者天然保持 1920:1080（16:9），与 background.jpg 的原始尺寸完全一致，
-     容器形状永远和图片形状相同，background-size: cover 就不会再裁掉画面内容 */
-  width: min(100vw, 177.7778vh);
-  height: min(100vh, 56.25vw);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  overflow: hidden; /* 防止图片超出边界 */
+  width: 100%;
+  height: 100dvh;
+  padding: 16px 12px;
+  gap: 12px;
   box-sizing: border-box;
-
-  /* background-image 通过内联样式绑定（见 template 里的 :style），
-     这样 public 目录下的图片在部署到子路径时也能正确拼出 base 前缀 */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 .map-title {
-  /* 哥特花体，来自 index.html 里引入的 Google Fonts */
+  /* 哥特花体由 src/style.css 中的本地 @font-face 提供。 */
   font-family: "UnifrakturMaguntia", "Times New Roman", serif;
   font-weight: 400;
   font-size: 2.75rem;
@@ -208,15 +239,8 @@ main {
 }
 .map-frame {
   position: relative;
-  /* 与 westeros.jpg 的原始宽高比一致，图片在框内不会有留白，
-     百分比坐标才能精确对应图片上的像素位置。
-     width/height 都保持 auto，只用 max-height/max-width 限制，
-     aspect-ratio 会在两者间自动取更小的一边，不会拉伸变形 */
+  width: min(100%, calc((100dvh - 100px) * 1920 / 2716));
   aspect-ratio: 1920 / 2716;
-  /* 减去标题高度、上下 padding 和 gap，避免总高度超出 .map-container 后被 overflow:hidden 裁掉；
-     改用相对 .map-container 自身尺寸的百分比，letterbox 之后容器变小时地图也跟着等比缩小 */
-  max-height: calc(100% - 90px);
-  max-width: 92%;
   flex-shrink: 0;
 }
 .map-image {
@@ -225,40 +249,23 @@ main {
   height: 100%;
   object-fit: cover;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
   border: 2px solid #333;
-}
-
-/* 竖屏（绝大多数手机竖持的场景）：.map-container 的 16:9 信封盒子是为桌面端
-   横向宽屏配合 background.jpg 设计的，搬到竖屏手机上会把地图压成屏幕中间一条
-   很窄的横条、上下大片留黑。竖屏下改成让容器撑满整个视口——地图图片本身
-   1920:2716 就是竖版比例，天然更适合竖屏，不需要再靠信封盒子对齐背景图。 */
-@media (max-aspect-ratio: 1/1) {
-  .map-container {
-    width: 100%;
-    height: 100%;
-  }
-  .map-frame {
-    max-height: calc(100% - 60px);
-  }
-}
-@media (max-width: 480px) {
-  .map-title {
-    font-size: 1.9rem;
-    letter-spacing: 2px;
-  }
 }
 
 .city-marker {
   position: absolute;
   transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  padding: 6px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
   cursor: pointer;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 .city-marker-dot {
@@ -271,7 +278,10 @@ main {
   transition: transform 0.2s;
 }
 .city-marker-label {
-  font-size: 0.7rem;
+  position: absolute;
+  top: 34px;
+  font-size: 13px;
+  line-height: 18px;
   color: #f5f0e6;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   white-space: nowrap;
@@ -288,19 +298,12 @@ main {
 .city-marker:focus-visible .city-marker-label {
   opacity: 1;
 }
-/* 触屏设备没有 hover 状态，城市名永远显示不出来，只能瞎点；
-   同时把可点击热区从视觉上的 14px 圆点放大到接近 44px，命中率更高 */
 @media (hover: none) {
-  .city-marker {
-    padding: 14px;
-  }
-  .city-marker-dot {
-    width: 16px;
-    height: 16px;
-  }
-  .city-marker-label {
-    opacity: 1;
-  }
+  .city-marker-label { opacity: 1; }
+}
+.city-marker:focus-visible, .bgm-toggle:focus-visible, .city-panel-close:focus-visible {
+  outline: 2px solid #f5f0e6;
+  outline-offset: 2px;
 }
 
 .city-panel {
@@ -336,8 +339,8 @@ main {
   position: absolute;
   top: 12px;
   right: 16px;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -357,9 +360,9 @@ main {
   /* 让街景图片撑满面板顶部两侧的 padding，做出通栏 banner 的效果 */
   width: calc(100% + 48px);
   margin: -32px -24px 24px;
-  /* 高度不再写死，改成 auto：每张图按自己的原始宽高比、跟着通栏宽度等比缩放，
-     图片本身多高，相框就多高，不再有裁切或者固定 280px 导致的上下留白 */
   height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
   background: rgba(15, 23, 42, 0.94);
   border-bottom: 1px solid rgba(245, 240, 230, 0.25);
 }
@@ -442,7 +445,7 @@ main {
   vertical-align: middle;
 }
 .city-panel-desc {
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1.7;
   margin: 0 0 14px;
 }
@@ -465,7 +468,7 @@ main {
 .city-panel-list {
   margin: 0 0 14px;
   padding-left: 20px;
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1.7;
 }
 .city-panel-list li {
@@ -518,5 +521,86 @@ main {
 .bgm-toggle:hover {
   background: rgba(15, 23, 42, 0.85);
   transform: scale(1.08);
+}
+
+.city-panel-expand { display: none; }
+.music-error {
+  position: fixed;
+  top: 76px;
+  right: 12px;
+  max-width: calc(100vw - 48px);
+  padding: 12px;
+  background: #0f172a;
+  z-index: 30;
+  font-size: 14px;
+}
+@media (max-width: 600px), (max-height: 500px) and (pointer: coarse) {
+  .map-container {
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    gap: 12px;
+  }
+  .map-title { font-size: 1.75rem; letter-spacing: 2px; }
+  .map-frame {
+    width: min(100%, calc((100dvh - 88px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 1920 / 2716));
+  }
+  .bgm-toggle {
+    width: 44px;
+    height: 44px;
+    top: max(12px, env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+  }
+  .city-panel.left, .city-panel.right {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 72dvh;
+    max-height: calc(100dvh - max(16px, env(safe-area-inset-top)));
+    border: 1px solid rgba(245, 240, 230, .25);
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .city-panel.city-panel--expanded { height: 94dvh; }
+  .city-panel-expand {
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    z-index: 10;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid rgba(245, 240, 230, .4);
+    border-radius: 22px;
+    color: #f5f0e6;
+    background: rgba(15, 23, 42, .85);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .city-panel-scroll {
+    padding: 24px 20px max(24px, env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
+  }
+  .city-panel-image {
+    width: calc(100% + 40px);
+    height: clamp(120px, 22dvh, 200px);
+    margin: -24px -20px 20px;
+  }
+  .city-panel h2 { font-size: 1.5rem; }
+  .city-panel-sigil { width: 56px; height: 56px; }
+  .city-panel-close { top: 10px; right: 12px; }
+  .slide-left-enter-from, .slide-left-leave-to,
+  .slide-right-enter-from, .slide-right-leave-to { transform: translateY(100%); }
+}
+@media (max-height: 500px) and (pointer: coarse) {
+  .map-container { justify-content: flex-start; overflow-y: auto; }
+  .map-frame { width: min(100%, 420px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; }
 }
 </style>
