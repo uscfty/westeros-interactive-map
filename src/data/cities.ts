@@ -29,6 +29,39 @@ export interface City {
 
 export const cities: City[] = [
   {
+    id: "the-twins",
+    name: "孪河城 The Twins",
+    ruler: "佛雷家族 House Frey",
+    // 底图 The Twins 图标中心，位于奔流城东北、绿叉河上。
+    x: 49.6,
+    y: 56.1,
+    side: "left",
+    sigil: `${BASE}sigils/frey.webp`,
+    image: `${BASE}cities/the-twins.webp`,
+    imageCredit: "城堡插画与家徽由站点作者提供。",
+    sources: [
+      { title: "Twins · A Wiki of Ice and Fire", url: "https://awoiaf.westeros.org/index.php/Twins" },
+      { title: "House Frey · 佛雷家族", url: "https://awoiaf.westeros.org/index.php/House_Frey" },
+      { title: "Water Tower · 水塔", url: "https://awoiaf.westeros.org/index.php/Water_Tower" },
+    ],
+    description: [
+      { kind: "paragraph", text: "孪河城是佛雷家族的居城，位于河间地北部、颈泽以南和国王大道以西，扼守三叉戟河的绿叉河渡口。它并非一座孤立城堡，而是分居两岸、由石桥连接的一对要塞，因而得名。来自北境、准备前往奔流城的军队，往往必须在这里争取通行。" },
+      { kind: "heading", level: 2, text: "建筑与防御" },
+      { kind: "paragraph", text: "两岸城堡形制相同，设有高耸幕墙、瓮城和铁闸。人工水道把河水引入护城壕，使两堡各自成为岛屿。连接它们的灰石拱桥可容两辆马车并行，桥头深入主堡内部，过桥者必须经过佛雷守军控制的关口。" },
+      { kind: "paragraph", text: "这样的布局让守军能够同时控制桥面与两岸。围攻一侧城堡，并不等于切断另一侧的支援；进攻者若想完成封锁，就必须设法把兵力部署到河流两边。" },
+      { kind: "heading", level: 3, text: "桥中的水塔" },
+      { kind: "paragraph", text: "水塔建在连接双堡的桥梁中央，是孪河城防御体系中的独立关卡。箭孔、杀人孔和铁闸保护着通道，守军既能监视过桥者，也能观察绿叉河上的动静。即使来到桥上，通行仍掌握在塔内守军手中。" },
+      { kind: "paragraph", text: "水塔同时承担接待贵客的功能，内部设有陈设讲究的房间与套间。羽毛床的床柱雕成塔楼形状，弯曲的阶梯连接楼层。防御设施与贵族居室共处一塔，使它兼具关隘和客舍的用途。" },
+      { kind: "heading", level: 2, text: "佛雷家族与渡口财富" },
+      { kind: "paragraph", text: "佛雷家族兴起约六百年，在维斯特洛古老贵族之中算是较年轻的一支。家族最初修建渡河桥梁，历经数代才完成石桥，并将两岸的木堡逐渐改建为石堡。向过路者收取通行费，使一处渡口慢慢成为财富与权力的来源。" },
+      { kind: "paragraph", text: "原著中的佛雷纹章以银灰为底，绘有石桥相连的两座蓝塔，直接对应孪河城的形制；家族领主被称为“河渡口领主”。他们虽是徒利家的封臣，却拥有广阔领地与可观兵力，不能被当作普通的小领主看待。一些历史更久的贵族轻视其收取桥税的出身，这种轻视也长期影响着家族与外界的关系。" },
+      { kind: "heading", level: 2, text: "瓦德侯爵与家族关系" },
+      { kind: "paragraph", text: "瓦德·佛雷执掌孪河城多年，众多子女与后裔使家族规模不断扩大，也带来复杂的婚姻和继承关系。劳勃叛乱时，他直到三叉戟河战役胜负已定才赶到，因此被霍斯特·徒利讥为“迟到的佛雷侯爵”。到了五王之战，渡口的通行权再次成为他与大军谈判的重要筹码。" },
+    ],
+  },
+
+
+  {
     id: "riverrun",
     name: "奔流城 Riverrun",
     ruler: "徒利家族 House Tully",

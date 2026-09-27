@@ -66,7 +66,7 @@ interface City {
 
 ## 目前已收录的城市
 
-奔流城 Riverrun · 旧镇 Oldtown · 高庭 Highgarden · 临冬城 Winterfell · 黑城堡 Castle Black · 凯岩城 Casterly Rock · 君临 King's Landing
+孪河城 The Twins · 奔流城 Riverrun · 旧镇 Oldtown · 高庭 Highgarden · 临冬城 Winterfell · 黑城堡 Castle Black · 凯岩城 Casterly Rock · 君临 King's Landing
 
 ## 开发笔记
 
