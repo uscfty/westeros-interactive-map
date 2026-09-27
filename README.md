@@ -7,7 +7,7 @@
 ## 技术栈
 
 - [Vite](https://vitejs.dev/) + [Vue 3](https://vuejs.org/)（`<script setup>` + TypeScript）
-- 无额外 UI 框架，样式全部手写在 `App.vue` 的 `<style scoped>` 里
+- 无额外 UI 框架；全站视觉在 `src/style.css`，地图样式在 `MapView.vue`
 
 ## 快速开始
 
@@ -26,9 +26,11 @@ westeros-interactive-map/
 ├── index.html              # 页面入口与手机视口设置
 ├── src/
 │   ├── main.ts              # Vue 应用入口
-│   ├── App.vue               # 唯一的组件，页面全部逻辑和样式都在这里
+│   ├── App.vue               # 导航、家族、历史、专题与搜索
+│   ├── components/MapView.vue # 地图、城市标记与详情面板
 │   └── data/
-│       └── cities.ts        # 城市数据表——新增一座城市只需要在这里加一条数据
+│       ├── cities.ts        # 城市资料
+│       └── atlas.ts         # 家族与专题导读
 └── public/
     ├── westeros.jpg          # 保留原始地图，用于编辑和坐标定位
     ├── westeros-*.webp       # 640/960/1920 宽度的响应式地图
@@ -82,3 +84,14 @@ interface City {
 - 标题字体由本地 `public/fonts` 提供，无需连接 Google Fonts；许可证见 `public/fonts/OFL.txt`。
 
 发布前执行 `npm run build`，再用 `npm run preview` 检查 `/westeros-interactive-map/` 子路径。
+
+## 图鉴第一版（本地设计）
+
+使用 hash 地址区分栏目，兼容 GitHub Pages 子路径与刷新，无需服务器重写：
+- `#/map`、`#/map/riverrun`：地图及指定城堡。
+- `#/houses`、`#/houses/tully`：六个家族的索引、筛选与档案。
+- `#/history`：坦格利安征服初代的五个人物关系与前三位国王的继承顺序，并非完整族谱。
+- `#/world`、`#/world/faith`：宗教、气候、经济和政治的入门导读。
+- `#/search`：搜索已收录的地点、家族、专题与王朝入口。
+
+家族与专题内容在 `src/data/atlas.ts`，附原著 Wiki 来源；家族档案与对应城堡双向链接。现有城市长文仍沿用原内容，并不提供全站无剧透保证。
