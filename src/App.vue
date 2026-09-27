@@ -153,8 +153,10 @@ const rulerEn = computed(() =>
             :src="selectedCity.image"
             :alt="`${selectedCity.name}街景`"
             class="city-panel-image"
+            :class="{ 'city-panel-image--complete': selectedCity.imageCredit }"
             decoding="async"
           />
+          <p v-if="selectedCity.imageCredit" class="city-panel-credit">{{ selectedCity.imageCredit }}</p>
           <div class="city-panel-body" :class="{ 'city-panel-body--royal': isRoyalCapital }">
             <h2 id="city-heading">{{ selectedCity.name }}</h2>
             <img
@@ -192,6 +194,10 @@ const rulerEn = computed(() =>
                 <li v-for="(item, itemIndex) in block.items" :key="itemIndex"><strong v-if="item.label">{{ item.label }}：</strong>{{ item.text }}</li>
               </ul>
             </template>
+            <footer v-if="selectedCity.sources?.length" class="city-panel-sources">
+              <p>参考资料</p>
+              <a v-for="source in selectedCity.sources" :key="source.url" :href="source.url" target="_blank" rel="noopener noreferrer">{{ source.title }}</a>
+            </footer>
           </div>
         </div>
       </aside>
@@ -600,6 +606,11 @@ main {
   .map-container { justify-content: flex-start; overflow-y: auto; }
   .map-frame { width: min(100%, 420px); }
 }
+.city-panel-image.city-panel-image--complete { height: auto; aspect-ratio: auto; }
+.city-panel-credit { font-size: 12px; line-height: 1.5; color: #d8c9a3; margin: -8px 0 16px; }
+.city-panel-sources { margin-top: 24px; border-top: 1px solid #f5f0e640; padding-top: 12px; font-size: 13px; }
+.city-panel-sources p { margin: 0 0 8px; }
+.city-panel-sources a { display: block; color: #d8c9a3; padding: 8px 0; overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
 }

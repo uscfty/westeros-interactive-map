@@ -23,9 +23,56 @@ export interface City {
   /** 城市街景/风貌图片路径，放在 public/cities 文件夹下 */
   image: string;
   description: DescriptionBlock[];
+  sources?: { title: string; url: string }[];
+  imageCredit?: string;
 }
 
 export const cities: City[] = [
+  {
+    id: "riverrun",
+    name: "奔流城 Riverrun",
+    ruler: "徒利家族 House Tully",
+    // 对齐底图奔流城圆形城堡图标中心。
+    x: 46,
+    y: 62.5,
+    side: "left",
+    sigil: `${BASE}sigils/tully.svg`,
+    image: `${BASE}cities/riverrun.webp`,
+    imageCredit: "城堡插画：Feliche；图片由站点作者提供。",
+    sources: [
+      { title: "Keep of Riverrun · 主堡", url: "https://awoiaf.westeros.org/index.php/Keep_of_Riverrun" },
+      { title: "Water Gate · 水门", url: "https://awoiaf.westeros.org/index.php/Water_Gate" },
+      { title: "Godswood of Riverrun · 神木林", url: "https://awoiaf.westeros.org/index.php/Godswood_of_Riverrun" },
+      { title: "Riverrun · A Wiki of Ice and Fire", url: "https://awoiaf.westeros.org/index.php/Riverrun" },
+      { title: "House Tully · A Wiki of Ice and Fire", url: "https://awoiaf.westeros.org/index.php/House_Tully" },
+    ],
+    description: [
+      { kind: "paragraph", text: "奔流城是徒利家族的祖堡，位于河间地西部、腾石河与红叉河交汇处。红砂岩城墙依水而立，城堡的轮廓顺着两河之间的土地收束，构成一座以河流为屏障的要塞。" },
+      { kind: "heading", level: 2, text: "建筑与防御" },
+      { kind: "paragraph", text: "城堡呈三角形，北侧紧邻腾石河，南侧面向红叉河，西侧则开凿了宽阔的人工壕沟。遇到围攻时，守军可开闸引水，让壕沟与两条河流共同围出一座水上孤岛。吊桥放下时连接两河之间的陆地，升起后便切断直接入城的通路。河流因此既是奔流城日常交通的一部分，也是它最重要的防线。" },
+      { kind: "heading", level: 3, text: "主要建筑" },
+      { kind: "list", items: [
+        { label: "主堡与大厅", text: "主堡俯瞰下方庭院，以厚重砂岩墙体围成三角形。螺旋阶梯通往楼上与屋顶；领主书房的石阳台向东伸出，可以望见两河汇流。霍斯特的卧房内，四柱床上还雕着跃起的鳟鱼，把家族纹章融入了日常起居。大厅则承担领主议事、接见与宴饮的功能。" },
+        { label: "水门与水车塔", text: "水门开在临河城墙上，拱门下垂着沉重的铁闸，出入须乘舟。门内的船只系在墙上的铁环上，再通过水边阶梯与城内庭院相连。附近水车塔旁的巨大水轮由腾石河驱动，常春藤攀附塔身，流水声成为城堡生活的背景。" },
+        { label: "神木林与圣堂", text: "城内既有栽着鱼梁木的花园，也有供奉七神的七边形砂岩圣堂。" },
+      ] },
+      { kind: "heading", level: 2, text: "神木林与城中生活" },
+      { kind: "paragraph", text: "奔流城的神木林是一座明亮通风的花园。老榆树与高大的红杉之间生长着野花、青草和薄荷，溪水穿过树下，鸟巢藏在枝叶中；一株纤细的鱼梁木刻着神情忧伤的人脸。从大厅前往主堡，穿过这片花园也是最短的路。" },
+      { kind: "paragraph", text: "徒利家族信奉七神，因此神木林更多用于散步、阅读和休憩。凯特琳童年时曾在这里跟父亲学习骑马，艾德慕也曾从榆树上跌落摔伤手臂。这样的家庭记忆，让奔流城除了坚固要塞的面貌，也有了孩子嬉戏、家人相伴的一面。" },
+      { kind: "heading", level: 2, text: "徒利家族" },
+      { kind: "paragraph", text: "徒利家族以跃起的银鳟鱼为家徽，配以蓝色与泥红色底纹，族语为“家族、责任、荣誉”（Family, Duty, Honor）。他们信奉七神，传统葬礼会让载有逝者的小舟顺河漂流，再以火箭将其点燃。" },
+      { kind: "paragraph", text: "徒利家族虽历史悠久，却不像一些大族那样曾经称王。他们长期作为地方领主经营奔流城，在河间地西部守护自己的领地。征服战争中，艾德敏·徒利率先响应伊耿、反抗赫伦，随后获封三叉戟河流域的最高领主，家族的政治地位由此发生重大转变。" },
+      { kind: "paragraph", text: "不过，最高领主的名号并不意味着徒利家族在兵力、财富和声望上都胜过每一位封臣。河间地诸侯各有根基，也常有争端，维系联盟和调停矛盾便成为奔流城领主的重要职责。家族联姻与个人威望，和城墙、河流一样，都是守护这片领地的依靠。" },
+      { kind: "heading", level: 2, text: "历史与人物" },
+      { kind: "list", items: [
+        { label: "城堡起源", text: "安达尔人到来时期，亚克塞尔·徒利在获赐的两河交汇地建起奔流城。" },
+        { label: "家族联姻", text: "霍斯特·徒利通过凯特琳与艾德·史塔克、莱莎与琼恩·艾林的婚姻，使河间地与北境、谷地建立紧密联系。" },
+        { label: "人物纽带", text: "凯特琳、莱莎与艾德慕是霍斯特的子女，分别把奔流城与北境、谷地及家族继承联系起来。霍斯特的弟弟布林登则以“黑鱼”之名闻名，他拒绝兄长安排的婚姻，也使这段兄弟关系长期蒙上阴影。" },
+      ] },
+      { kind: "paragraph", text: "本介绍以原著背景及徒利家族的祖堡身份为主，不按后期剧情更新城堡归属。" },
+    ],
+  },
+
   {
     id: "oldtown",
     name: "旧镇 Oldtown",
